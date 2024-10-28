@@ -1,56 +1,49 @@
 import torch
 import time
 
-
-def check_cuda():
-    # Check if CUDA is available
+def is_cuda_available():
+    """Check if CUDA is available."""
     if torch.cuda.is_available():
-        print("CUDA is available. Running benchmark with GPU.")
         return True
-    else:
-        print("CUDA is not available. Running benchmark with CPU.")
-        return False
+    return False
 
-
-def benchmark(device, size=100, repetitions=1):
-    # Create random matrices for the benchmark
-    # size = 10000# Change this size for different benchmarking durations
+def benchmark(device, size=10, repetitions=1):
+    """Benchmark matrix multiplication on the specified device."""
     x = torch.randn(size, size, device=device)
     y = torch.randn(size, size, device=device)
 
-    # Warm-up
+    # Warm-up to ensure accurate timing
     _ = torch.matmul(x, y)
 
-    # Benchmark start time
-    start_time = time.time()
-
-    # Run matrix multiplication
-    for _ in range(repetitions):  # Run multiple times to get a more stable time measurement
+    start_time = time.perf_counter_ns()
+    for _ in range(repetitions):
         _ = torch.matmul(x, y)
+    duration = (time.perf_counter_ns() - start_time) / 1e9  # Convert to seconds
 
-    # Calculate duration
-    duration = time.time() - start_time
     return duration
 
-
 def main():
-    use_cuda = check_cuda()
+    use_cuda = is_cuda_available()
 
-    # Benchmark on CPU
-    cpu_duration = benchmark("cpu")
-    print(f"CPU Benchmark Duration: {cpu_duration:.4f} seconds")
+    size = 10000
+    repetitions = 20
 
-    # Benchmark on GPU if CUDA is available
+    print(f"CUDA is {'' if use_cuda else 'not '}available. Benchmark matrix {size}x{size} multiplied {repetitions} times.")
+
+    # Run CPU benchmark
+    cpu_duration = benchmark("cpu", size, repetitions)
+    print(f"CPU Benchmark Duration: {cpu_duration:.8f} seconds")
+
+    # Run GPU benchmark if CUDA is available
+    gpu_duration = None
     if use_cuda:
-        gpu_duration = benchmark("cuda")
-        print(f"GPU (CUDA) Benchmark Duration: {gpu_duration:.4f} seconds")
-    else:
-        gpu_duration = None
+        gpu_duration = benchmark("cuda", size, repetitions)
+        print(f"GPU Benchmark Duration: {gpu_duration:.8f} seconds")
 
     # Compare results if both tests were conducted
-    if gpu_duration and cpu_duration:
-        print(f"Speedup: {cpu_duration / gpu_duration:.2f}x faster on GPU")
-
+    if gpu_duration:
+        speedup = cpu_duration / gpu_duration
+        print(f"Speedup: {speedup:.4f}x faster on GPU")
 
 if __name__ == "__main__":
     main()
