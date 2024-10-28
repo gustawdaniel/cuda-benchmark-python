@@ -1,6 +1,23 @@
 import torch
 import time
 
+import subprocess
+
+def get_cpu_model():
+    try:
+        model = subprocess.check_output("lscpu | grep 'Model name'", shell=True).decode().strip()
+        return model.split(":")[1].strip()
+    except Exception as e:
+        return str(e)
+
+def get_gpu_model():
+    try:
+        # Use `nvidia-smi` for NVIDIA GPUs
+        gpu_info = subprocess.check_output(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"]).decode().strip()
+        return gpu_info
+    except Exception as e:
+        return "Could not retrieve GPU model."
+
 def is_cuda_available():
     """Check if CUDA is available."""
     if torch.cuda.is_available():
@@ -33,10 +50,17 @@ def main():
     use_cuda = is_cuda_available()
     use_cpu = True
 
-    size = 10000
+    size = 1000
     repetitions = 1
 
     print(f"CUDA is {'' if use_cuda else 'not '}available. Benchmark matrix {size}x{size} multiplied {repetitions} times.")
+
+    if use_cpu:
+        print("CPU Model:", get_cpu_model())
+
+    if use_cuda:
+        print("GPU Model:", get_gpu_model())
+
     # Run CPU benchmark
     cpu_duration = None
     if use_cpu:
