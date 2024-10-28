@@ -50,8 +50,8 @@ def main():
     use_cuda = is_cuda_available()
     use_cpu = True
 
-    size = 1000
-    repetitions = 1
+    size = 10000
+    repetitions = 10
 
     print(f"CUDA is {'' if use_cuda else 'not '}available. Benchmark matrix {size}x{size} multiplied {repetitions} times.")
 
